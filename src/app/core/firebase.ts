@@ -1,0 +1,11 @@
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import { getFunctions } from 'firebase/functions';
+import { environment } from '../../environments/environment';
+export const firebaseApp = initializeApp(environment.firebase);
+export const firebaseAuth = getAuth(firebaseApp);
+export const firestore = getFirestore(firebaseApp);
+export const firebaseStorage = getStorage(firebaseApp);
+export const firebaseFunctions = getFunctions(firebaseApp, 'europe-west1');

@@ -1,0 +1,9 @@
+{
+  "host": "smtp.ton-fournisseur.fr",
+  "port": 465,
+  "secure": true,
+  "user": "commandes@ton-domaine.fr",
+  "password": "A_ENREGISTRER_DANS_SECRET_MANAGER",
+  "from": "MAYKLAIT <commandes@ton-domaine.fr>",
+  "replyTo": "bonjour@ton-domaine.fr"
+}
