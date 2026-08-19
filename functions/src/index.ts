@@ -156,6 +156,10 @@ export const validatePromotion = onCall(async request => {
 export const createOrder = onCall(async request => {
   if (!request.auth) throw new HttpsError('unauthenticated', 'Tu dois être connecté pour commander.');
   const auth = request.auth;
+  const passwordAccount = auth.token.firebase?.sign_in_provider === 'password';
+  if (passwordAccount && auth.token.email_verified !== true) {
+    throw new HttpsError('failed-precondition', 'Vérifie ton adresse email avant de confirmer ta commande.');
+  }
   const data = request.data as CreateOrderData;
   const customer = {
     firstName: requiredText(data?.customer?.firstName, 'Le prénom', 80),

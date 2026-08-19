@@ -104,8 +104,8 @@ import { AppUser, Role } from '../core/models';
         @if (creating()) {
           <form [formGroup]="createForm" (ngSubmit)="createCustomer()">
             <p class="drawer-note">
-              Un compte Firebase Authentication sera créé. Communique ensuite le mot de passe
-              temporaire au client de manière sécurisée.
+              Un compte Firebase Authentication sera créé et un email de vérification sera envoyé.
+              Communique ensuite le mot de passe temporaire au client de manière sécurisée.
             </p>
             <div class="form-row">
               <label>Prénom *<input formControlName="firstName" /></label

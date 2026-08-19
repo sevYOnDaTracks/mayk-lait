@@ -5,7 +5,7 @@
 
 @media(max-width:900px){
   .product-photo{height:auto;min-height:0;aspect-ratio:4/3;position:relative;top:auto;overflow:hidden}
-  .product-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center}
+  .product-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 45%}
 }
 
 @media(max-width:650px){

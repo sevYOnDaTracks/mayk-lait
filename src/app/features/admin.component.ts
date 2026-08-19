@@ -12,13 +12,12 @@ import { OrderStatus, Product } from '../core/models';
     <aside class="admin-sidebar">
       <a routerLink="/admin" class="brand brand-light">MAYKLAIT<span>ADMIN</span></a>
       <nav>
-        <a routerLink="/admin" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active"
-          >Dashboard</a
-        ><a routerLink="/admin/orders" routerLinkActive="active">Commandes</a
-        ><a routerLink="/admin/products" routerLinkActive="active">Produits</a
-        ><a routerLink="/admin/clients" routerLinkActive="active">Clients</a
-        ><a routerLink="/admin/promotions" routerLinkActive="active">Codes promo</a
-        ><a routerLink="/admin/settings" routerLinkActive="active">Paramètres</a>
+        <a routerLink="/admin" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="active" aria-label="Dashboard" title="Dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Dashboard</span></a
+        ><a routerLink="/admin/orders" routerLinkActive="active" aria-label="Commandes" title="Commandes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l1 13H5L6 8Z"/><path d="M9 9V6a3 3 0 0 1 6 0v3"/></svg><span>Commandes</span></a
+        ><a routerLink="/admin/products" routerLinkActive="active" aria-label="Produits" title="Produits"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/><path d="M12 11v10"/></svg><span>Produits</span></a
+        ><a routerLink="/admin/clients" routerLinkActive="active" aria-label="Clients" title="Clients"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="17" cy="9" r="2"/><path d="M16 15a5 5 0 0 1 5 5"/></svg><span>Clients</span></a
+        ><a routerLink="/admin/promotions" routerLinkActive="active" aria-label="Codes promo" title="Codes promo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 13 11 22l-9-9V4h9l9 9Z"/><circle cx="7" cy="9" r="1.5"/></svg><span>Promos</span></a
+        ><a routerLink="/admin/settings" routerLinkActive="active" aria-label="Paramètres" title="Paramètres"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2h-4V21a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H2.8v-4H3a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3V2.8h4V3a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.2v4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg><span>Paramètres</span></a>
       </nav>
       <button (click)="logout()">Déconnexion</button>
     </aside>

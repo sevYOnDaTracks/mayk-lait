@@ -90,10 +90,24 @@ import { CheckoutSettingsService } from '../core/checkout-settings.service';
             </div>
             <label>Instructions de livraison<textarea formControlName="instructions" rows="3" placeholder="Code, étage, porte..." (input)="clearAddressSelection()"></textarea></label>
 
+            @if (auth.emailVerificationRequired()) {
+              <section class="checkout-email-verification" aria-live="polite">
+                <div>
+                  <strong>Vérifie ton adresse email</strong>
+                  <p>Cette étape est obligatoire avant de confirmer ta commande.</p>
+                </div>
+                <div class="checkout-verification-actions">
+                  <button type="button" class="text-button" (click)="refreshEmailVerification()" [disabled]="verificationBusy()">J’ai vérifié mon email</button>
+                  <button type="button" class="text-button" (click)="resendVerification()" [disabled]="verificationBusy()">Renvoyer le lien</button>
+                </div>
+                @if (verificationMessage()) { <small>{{ verificationMessage() }}</small> }
+              </section>
+            }
+
             <h2>Paiement</h2>
             <div class="payment-placeholder"><span>À la livraison</span><small>Le paiement en ligne sera bientôt disponible.</small></div>
             @if (error()) { <p class="form-error">{{ error() }}</p> }
-            <button class="button full" [disabled]="form.invalid || saving()">{{ saving() ? 'Enregistrement…' : 'Confirmer ma commande' }}</button>
+            <button class="button full" [disabled]="form.invalid || saving() || auth.emailVerificationRequired()">{{ saving() ? 'Enregistrement…' : 'Confirmer ma commande' }}</button>
           </form>
 
           <aside class="order-summary" [formGroup]="form">
@@ -105,18 +119,30 @@ import { CheckoutSettingsService } from '../core/checkout-settings.service';
                 <span>{{ item.unitPrice * item.quantity | currency:'EUR':'symbol':'1.2-2':'fr' }}</span>
               </div>
             }
-            <div class="promo-box">
-              <label for="promo-code">Code promo</label>
-              <div class="promo-input-row">
-                <input id="promo-code" formControlName="promoCode" placeholder="MAYKLAIT10" autocomplete="off" (input)="promoChanged()">
-                <button type="button" class="button ghost" [disabled]="promoValidating() || !form.controls.promoCode.value" (click)="applyPromotion()">
-                  {{ promoValidating() ? 'Vérification…' : 'Appliquer' }}
-                </button>
-              </div>
+            <div class="promo-box" [class.applied]="appliedPromotion()">
               @if (appliedPromotion(); as promotion) {
-                <div class="promo-success"><span>Code {{ promotion.code }} appliqué</span><button type="button" class="text-button" (click)="removePromotion()">Retirer</button></div>
-              } @else if (promoError()) {
-                <p class="promo-error">{{ promoError() }}</p>
+                <div class="promo-applied">
+                  <span class="promo-check" aria-hidden="true">✓</span>
+                  <span><small>CODE APPLIQUÉ</small><strong>{{ promotion.code }}</strong></span>
+                  <button type="button" class="promo-remove" (click)="removePromotion()" aria-label="Retirer le code promo">Retirer</button>
+                </div>
+              } @else {
+                <button type="button" class="promo-trigger" (click)="promoOpen.set(!promoOpen())" [attr.aria-expanded]="promoOpen()" aria-controls="promo-entry">
+                  <span aria-hidden="true">{{ promoOpen() ? '−' : '+' }}</span>
+                  {{ promoOpen() ? 'Code promo' : 'Ajouter un code promo' }}
+                </button>
+                @if (promoOpen()) {
+                  <div id="promo-entry" class="promo-entry">
+                    <label for="promo-code">Ton code</label>
+                    <div class="promo-input-row">
+                      <input id="promo-code" formControlName="promoCode" placeholder="Ex. MAYKLAIT10" autocomplete="off" (input)="promoChanged()">
+                      <button type="button" class="promo-apply" [disabled]="promoValidating() || !form.controls.promoCode.value" (click)="applyPromotion()">
+                        {{ promoValidating() ? 'Vérification…' : 'Appliquer' }}
+                      </button>
+                    </div>
+                    @if (promoError()) { <p class="promo-error">{{ promoError() }}</p> }
+                  </div>
+                }
               }
             </div>
             <dl>
@@ -139,7 +165,7 @@ export class CheckoutComponent {
   readonly cart = inject(CartService);
   readonly addresses = inject(AddressService);
   private fb = inject(FormBuilder);
-  private auth = inject(AuthService);
+  readonly auth = inject(AuthService);
   private orders = inject(OrderService);
   private checkoutSettings = inject(CheckoutSettingsService);
   readonly done = signal(false);
@@ -149,6 +175,9 @@ export class CheckoutComponent {
   readonly confirmedOrderNumber = signal('');
   readonly promoValidating = signal(false);
   readonly promoError = signal('');
+  readonly promoOpen = signal(false);
+  readonly verificationBusy = signal(false);
+  readonly verificationMessage = signal('');
   readonly appliedPromotion = signal<PromotionValidation | null>(null);
   readonly selectedAddressId = signal<string | null>(null);
   readonly delivery = this.checkoutSettings.deliveryFee;
@@ -217,9 +246,11 @@ export class CheckoutComponent {
       const promotion = await this.orders.validatePromotion(code, this.cart.subtotal());
       this.form.controls.promoCode.setValue(promotion.code);
       this.appliedPromotion.set(promotion);
+      this.promoOpen.set(false);
     } catch (error: any) {
       this.appliedPromotion.set(null);
-      this.promoError.set(error?.message ?? 'Ce code promo n’est pas valide.');
+      const message = String(error?.message ?? '').trim();
+      this.promoError.set(!message || message.toLowerCase() === 'internal' || message.toLowerCase().includes('internal error') ? 'Impossible de vérifier ce code pour le moment.' : message);
     } finally {
       this.promoValidating.set(false);
     }
@@ -229,10 +260,37 @@ export class CheckoutComponent {
     this.form.controls.promoCode.setValue('');
     this.appliedPromotion.set(null);
     this.promoError.set('');
+    this.promoOpen.set(true);
+  }
+
+  async resendVerification() {
+    this.verificationBusy.set(true);
+    this.verificationMessage.set('');
+    try {
+      await this.auth.sendVerificationEmail();
+      this.verificationMessage.set('Un nouveau lien vient d’être envoyé.');
+    } catch {
+      this.verificationMessage.set('Impossible de renvoyer le lien maintenant. Réessaie dans quelques minutes.');
+    } finally {
+      this.verificationBusy.set(false);
+    }
+  }
+
+  async refreshEmailVerification() {
+    this.verificationBusy.set(true);
+    this.verificationMessage.set('');
+    try {
+      const verified = await this.auth.refreshEmailVerification();
+      if (!verified) this.verificationMessage.set('L’adresse n’est pas encore vérifiée. Clique sur le lien reçu par email.');
+    } catch {
+      this.verificationMessage.set('Impossible de vérifier le statut pour le moment.');
+    } finally {
+      this.verificationBusy.set(false);
+    }
   }
 
   async confirm() {
-    if (this.form.invalid || !this.cart.items().length) return;
+    if (this.form.invalid || !this.cart.items().length || this.auth.emailVerificationRequired()) return;
     this.saving.set(true);
     this.error.set('');
     const value = this.form.getRawValue();

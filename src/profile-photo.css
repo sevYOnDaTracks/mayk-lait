@@ -11,7 +11,8 @@
 .profile-upload-progress span{display:block;height:100%;background:#000;transition:width .2s}
 .profile-photo-copy small{color:#6b6b6b}
 .profile-photo-copy .form-error{margin:16px 0 0}
-.account-profile-head{display:flex;align-items:center;gap:32px;padding:30px 0 70px}
+.account-profile-head{display:flex;align-items:center;gap:32px;padding:30px 0 38px}
 .account-profile-head .account-head{padding:0}
 .account-avatar{width:112px;height:112px;font-size:28px}
-@media(max-width:650px){.profile-photo-card{grid-template-columns:84px 1fr;gap:18px;padding:20px;margin-bottom:34px}.profile-avatar{width:84px;height:84px;font-size:23px}.profile-photo-actions{align-items:flex-start;flex-direction:column;gap:14px}.profile-photo-actions .button{width:100%;min-height:44px}.account-profile-head{align-items:flex-start;gap:18px;padding:20px 0 55px}.account-avatar{width:68px;height:68px;font-size:19px}.account-profile-head .account-head{flex:1}.account-profile-head .account-head h1{margin-top:12px}.profile-page h1{margin-bottom:30px}}
+.profile-form .form-note{margin:10px 0 26px;border-radius:12px;line-height:1.5}.profile-save-button{min-width:220px}
+@media(max-width:650px){.profile-photo-card{grid-template-columns:84px 1fr;gap:18px;padding:20px;margin-bottom:34px}.profile-avatar{width:84px;height:84px;font-size:23px}.profile-photo-actions{align-items:flex-start;flex-direction:column;gap:14px}.profile-photo-actions .button{width:100%;min-height:44px}.account-profile-head{display:block;padding:20px 0 30px}.account-profile-head .account-avatar{display:none}.account-profile-head .account-head{width:100%}.account-profile-head .account-head h1{margin-top:12px}.profile-page h1{margin-bottom:30px}.profile-form .form-note{margin:6px 0 24px;padding:17px 18px}.profile-save-button{width:100%;min-height:58px;margin:0;border-radius:14px}}

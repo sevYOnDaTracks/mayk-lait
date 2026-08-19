@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminOrder, OrderAdminService } from '../core/order-admin.service';
 import { OrderStatus } from '../core/models';
 import { displayOrderNumber } from '../core/order-number';
+import { CustomerAdminService } from '../core/customer-admin.service';
 
 function inputDate(date: Date) {
   const pad = (value: number) => String(value).padStart(2, '0');
@@ -43,16 +44,16 @@ function currentOrderWeek(date = new Date()) {
             [value]="search()"
             (input)="search.set($any($event.target).value)"
             aria-label="Rechercher une commande"
-          >
+          />
         </label>
         <div class="order-date-range" aria-label="Filtrer les commandes par intervalle de dates">
           <label>
             <span>Du</span>
-            <input type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)">
+            <input type="date" [ngModel]="dateFrom()" (ngModelChange)="dateFrom.set($event)" />
           </label>
           <label>
             <span>Au</span>
-            <input type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)">
+            <input type="date" [ngModel]="dateTo()" (ngModelChange)="dateTo.set($event)" />
           </label>
           @if (dateFrom() || dateTo()) {
             <button type="button" class="text-button" (click)="clearDates()">Effacer</button>
@@ -63,7 +64,9 @@ function currentOrderWeek(date = new Date()) {
       <div class="order-filter-row">
         <div class="filter-tabs">
           @for (item of filters; track item.value) {
-            <button [class.active]="filter() === item.value" (click)="filter.set(item.value)">{{ item.label }}</button>
+            <button [class.active]="filter() === item.value" (click)="selectFilter(item.value, $event)">
+              {{ item.label }}
+            </button>
           }
         </div>
         <span class="order-results">{{ filtered().length }} commande(s)</span>
@@ -76,20 +79,44 @@ function currentOrderWeek(date = new Date()) {
       } @else if (!filtered().length) {
         <div class="admin-empty">
           <h2>Aucune commande.</h2>
-          <p>{{ search() ? 'Aucune commande ne correspond à cette recherche.' : 'Aucune commande ne correspond à ce filtre.' }}</p>
+          <p>
+            {{
+              search()
+                ? 'Aucune commande ne correspond à cette recherche.'
+                : 'Aucune commande ne correspond à ce filtre.'
+            }}
+          </p>
         </div>
       } @else {
         <div class="orders-mobile">
           @for (order of filtered(); track order.id) {
             <article>
               <div>
-                <small>{{ orderNumber(order) }} · {{ order.createdAt?.toDate() | date:'dd/MM à HH:mm' }}</small>
-                <h2>{{ customerName(order) }}</h2>
+                <small
+                  >{{ orderNumber(order) }} ·
+                  {{ order.createdAt?.toDate() | date: 'dd/MM à HH:mm' }}</small
+                >
+                <div class="order-customer-line">
+                  <span class="order-customer-avatar">
+                    @if (customerPhoto(order); as photo) {
+                      <img [src]="photo" alt="" />
+                    } @else {
+                      {{ customerInitials(order) }}
+                    }
+                  </span>
+                  <h2>{{ customerName(order) }}</h2>
+                </div>
                 <p>{{ itemCount(order) }} article(s)</p>
               </div>
               <div>
-                <strong>{{ order.total || 0 | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong>
-                <select [ngModel]="order.status" (ngModelChange)="changeStatus(order, $event)" aria-label="Modifier le statut">
+                <strong>{{
+                  order.total || 0 | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr'
+                }}</strong>
+                <select
+                  [ngModel]="order.status"
+                  (ngModelChange)="changeStatus(order, $event)"
+                  aria-label="Modifier le statut"
+                >
                   <option value="pending">Nouvelle</option>
                   <option value="confirmed">Confirmée</option>
                   <option value="preparing">En préparation</option>
@@ -98,7 +125,9 @@ function currentOrderWeek(date = new Date()) {
                   <option value="completed">Terminée</option>
                   <option value="cancelled">Annulée</option>
                 </select>
-                <button type="button" class="order-detail-trigger" (click)="openOrder(order)">Voir le détail <span>→</span></button>
+                <button type="button" class="order-detail-trigger" (click)="openOrder(order)">
+                  Voir le détail <span>→</span>
+                </button>
               </div>
             </article>
           }
@@ -107,18 +136,24 @@ function currentOrderWeek(date = new Date()) {
 
       @if (selectedOrder(); as order) {
         <div class="admin-order-backdrop" (click)="closeOrder()"></div>
-        <aside class="admin-order-drawer" role="dialog" aria-modal="true" aria-labelledby="admin-order-title">
+        <aside
+          class="admin-order-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-order-title"
+        >
           <div class="drawer-head">
             <div>
               <p class="eyebrow">COMMANDE</p>
               <h2 id="admin-order-title">{{ orderNumber(order) }}</h2>
-              <small>{{ order.createdAt?.toDate() | date:'dd MMMM yyyy à HH:mm' }}</small>
+              <small>{{ order.createdAt?.toDate() | date: 'dd MMMM yyyy à HH:mm' }}</small>
             </div>
             <button class="icon-button" (click)="closeOrder()" aria-label="Fermer">×</button>
           </div>
 
           <section class="admin-order-status">
-            <label>Statut de la commande
+            <label
+              >Statut de la commande
               <select [ngModel]="order.status" (ngModelChange)="changeStatus(order, $event)">
                 <option value="pending">Nouvelle</option>
                 <option value="confirmed">Confirmée</option>
@@ -132,27 +167,73 @@ function currentOrderWeek(date = new Date()) {
           </section>
 
           <section class="admin-order-section">
-            <div class="admin-order-section-title"><h3>Articles à préparer</h3><span>{{ itemCount(order) }}</span></div>
-            <p class="admin-order-edit-note">{{ canEditOrder(order) ? 'Tu peux ajuster les quantités jusqu’au statut « En préparation ».' : 'Les quantités sont verrouillées à ce stade.' }}</p>
-            @if (itemEditError()) { <p class="form-error">{{ itemEditError() }}</p> }
+            <div class="admin-order-section-title">
+              <h3>Articles à préparer</h3>
+              <span>{{ itemCount(order) }}</span>
+            </div>
+            <p class="admin-order-edit-note">
+              {{
+                canEditOrder(order)
+                  ? 'Tu peux ajuster les quantités jusqu’au statut « En préparation ».'
+                  : 'Les quantités sont verrouillées à ce stade.'
+              }}
+            </p>
+            @if (itemEditError()) {
+              <p class="form-error">{{ itemEditError() }}</p>
+            }
             <div class="admin-order-items">
               @for (item of order.items ?? []; track item.id ?? $index; let itemIndex = $index) {
                 <article>
-                  @if (item.image) { <img [src]="item.image" [alt]="item.name || 'Produit MAYKLAIT'"> }
+                  @if (item.image) {
+                    <img [src]="item.image" [alt]="item.name || 'Produit MAYKLAIT'" />
+                  }
                   <div>
                     <h4>{{ item.quantity || 1 }} × {{ item.name }}</h4>
-                    @if (item.volume) { <p>{{ item.volume }}</p> }
+                    @if (item.volume) {
+                      <p>{{ item.volume }}</p>
+                    }
                     @for (selection of item.selections ?? []; track selection.groupId ?? $index) {
-                      <small><strong>{{ selection.groupName }}</strong> : @for (option of selection.options ?? []; track option.id ?? $index) { {{ option.name }}@if (!$last) {, } }</small>
+                      <small
+                        ><strong>{{ selection.groupName }}</strong> :
+                        @for (option of selection.options ?? []; track option.id ?? $index) {
+                          {{ option.name }}
+                          @if (!$last) {
+                            ,
+                          }
+                        }
+                      </small>
                     }
                   </div>
                   <div class="admin-order-line-actions">
-                    <strong>{{ (item.unitPrice || 0) * (item.quantity || 1) | currency:'EUR':'symbol':'1.2-2':'fr' }}</strong>
+                    <strong>{{
+                      (item.unitPrice || 0) * (item.quantity || 1)
+                        | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr'
+                    }}</strong>
                     @if (canEditOrder(order)) {
                       <div class="admin-quantity-editor" aria-label="Modifier la quantité">
-                        <button type="button" [disabled]="(item.quantity || 1) <= 1 || updatingItemIndex() === itemIndex" (click)="changeQuantity(order, itemIndex, (item.quantity || 1) - 1)" [attr.aria-label]="'Diminuer la quantité de ' + item.name">−</button>
-                        <span>{{ updatingItemIndex() === itemIndex ? '…' : (item.quantity || 1) }}</span>
-                        <button type="button" [disabled]="(item.quantity || 1) >= 100 || updatingItemIndex() === itemIndex" (click)="changeQuantity(order, itemIndex, (item.quantity || 1) + 1)" [attr.aria-label]="'Augmenter la quantité de ' + item.name">+</button>
+                        <button
+                          type="button"
+                          [disabled]="
+                            (item.quantity || 1) <= 1 || updatingItemIndex() === itemIndex
+                          "
+                          (click)="changeQuantity(order, itemIndex, (item.quantity || 1) - 1)"
+                          [attr.aria-label]="'Diminuer la quantité de ' + item.name"
+                        >
+                          −
+                        </button>
+                        <span>{{
+                          updatingItemIndex() === itemIndex ? '…' : item.quantity || 1
+                        }}</span>
+                        <button
+                          type="button"
+                          [disabled]="
+                            (item.quantity || 1) >= 100 || updatingItemIndex() === itemIndex
+                          "
+                          (click)="changeQuantity(order, itemIndex, (item.quantity || 1) + 1)"
+                          [attr.aria-label]="'Augmenter la quantité de ' + item.name"
+                        >
+                          +
+                        </button>
                       </div>
                     }
                   </div>
@@ -164,36 +245,71 @@ function currentOrderWeek(date = new Date()) {
           <section class="admin-order-section admin-order-customer">
             <h3>Client et livraison</h3>
             <div class="admin-order-info-grid">
-              <div><small>CLIENT</small><p><strong>{{ customerName(order) }}</strong><br>{{ order.customer?.email }}<br>{{ order.customer?.phone }}</p></div>
-              <div><small>ADRESSE</small><p>{{ order.address?.line1 }}@if (order.address?.line2) {<br>{{ order.address?.line2 }}}<br>{{ order.address?.postalCode }} {{ order.address?.city }}</p></div>
+              <div>
+                <small>CLIENT</small>
+                <p>
+                  <strong>{{ customerName(order) }}</strong
+                  ><br />{{ order.customer?.email }}<br />{{ order.customer?.phone }}
+                </p>
+              </div>
+              <div>
+                <small>ADRESSE</small>
+                <p>
+                  {{ order.address?.line1 }}
+                  @if (order.address?.line2) {
+                    <br />{{ order.address?.line2 }}
+                  }
+                  <br />{{ order.address?.postalCode }} {{ order.address?.city }}
+                </p>
+              </div>
             </div>
             @if (order.address?.instructions) {
-              <div class="admin-delivery-note"><small>INSTRUCTIONS DE LIVRAISON</small><p>{{ order.address?.instructions }}</p></div>
+              <div class="admin-delivery-note">
+                <small>INSTRUCTIONS DE LIVRAISON</small>
+                <p>{{ order.address?.instructions }}</p>
+              </div>
             }
           </section>
 
           <section class="admin-order-totals">
             <dl>
-              <div><dt>Sous-total</dt><dd>{{ order.subtotal || 0 | currency:'EUR':'symbol':'1.2-2':'fr' }}</dd></div>
-              @if (order.discount) { <div class="discount-line"><dt>Code {{ order.promotion?.code }}</dt><dd>− {{ order.discount | currency:'EUR':'symbol':'1.2-2':'fr' }}</dd></div> }
-              <div><dt>Livraison</dt><dd>{{ order.deliveryFee || 0 | currency:'EUR':'symbol':'1.2-2':'fr' }}</dd></div>
-              <div class="grand-total"><dt>Total</dt><dd>{{ order.total || 0 | currency:'EUR':'symbol':'1.2-2':'fr' }}</dd></div>
+              <div>
+                <dt>Sous-total</dt>
+                <dd>{{ order.subtotal || 0 | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</dd>
+              </div>
+              @if (order.discount) {
+                <div class="discount-line">
+                  <dt>Code {{ order.promotion?.code }}</dt>
+                  <dd>− {{ order.discount | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</dd>
+                </div>
+              }
+              <div>
+                <dt>Livraison</dt>
+                <dd>{{ order.deliveryFee || 0 | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</dd>
+              </div>
+              <div class="grand-total">
+                <dt>Total</dt>
+                <dd>{{ order.total || 0 | currency: 'EUR' : 'symbol' : '1.2-2' : 'fr' }}</dd>
+              </div>
             </dl>
           </section>
         </aside>
       }
     </section>
-  `
+  `,
 })
 export class AdminOrdersLiveComponent {
   private readonly defaultDateRange = currentOrderWeek();
   readonly orders = inject(OrderAdminService);
+  readonly customers = inject(CustomerAdminService);
   readonly filter = signal<'all' | OrderStatus>('all');
   readonly search = signal('');
   readonly dateFrom = signal(this.defaultDateRange.from);
   readonly dateTo = signal(this.defaultDateRange.to);
   readonly selectedOrderId = signal<string | null>(null);
-  readonly selectedOrder = computed(() => this.orders.orders().find(order => order.id === this.selectedOrderId()));
+  readonly selectedOrder = computed(() =>
+    this.orders.orders().find((order) => order.id === this.selectedOrderId()),
+  );
   readonly updatingItemIndex = signal<number | null>(null);
   readonly itemEditError = signal('');
   readonly orderNumber = displayOrderNumber;
@@ -205,12 +321,12 @@ export class AdminOrdersLiveComponent {
     { value: 'ready' as const, label: 'Prêtes' },
     { value: 'delivering' as const, label: 'En livraison' },
     { value: 'completed' as const, label: 'Terminées' },
-    { value: 'cancelled' as const, label: 'Annulées' }
+    { value: 'cancelled' as const, label: 'Annulées' },
   ];
 
   readonly filtered = computed(() => {
     const term = this.normalize(this.search());
-    return this.orders.orders().filter(order => {
+    return this.orders.orders().filter((order) => {
       const matchesStatus = this.filter() === 'all' || order.status === this.filter();
       const matchesDate = this.isWithinDateRange(order);
       if (!matchesStatus || !matchesDate) return false;
@@ -221,14 +337,40 @@ export class AdminOrdersLiveComponent {
         customer?.firstName,
         customer?.lastName,
         customer?.email,
-        customer?.phone
-      ].filter(Boolean).join(' ');
+        customer?.phone,
+      ]
+        .filter(Boolean)
+        .join(' ');
       return this.normalize(searchable).includes(term);
     });
   });
 
   customerName(order: AdminOrder) {
-    return [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(' ') || 'Client';
+    return (
+      [order.customer?.firstName, order.customer?.lastName].filter(Boolean).join(' ') || 'Client'
+    );
+  }
+
+  customerPhoto(order: AdminOrder) {
+    return this.customerProfile(order)?.photoURL ?? '';
+  }
+
+  customerInitials(order: AdminOrder) {
+    const profile = this.customerProfile(order);
+    const firstName = profile?.firstName ?? order.customer?.firstName ?? '';
+    const lastName = profile?.lastName ?? order.customer?.lastName ?? '';
+    return `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase() || '?';
+  }
+
+  private customerProfile(order: AdminOrder) {
+    const email = order.customer?.email?.trim().toLowerCase();
+    return this.customers
+      .customers()
+      .find(
+        (customer) =>
+          customer.uid === order.userId ||
+          (!!email && customer.email.trim().toLowerCase() === email),
+      );
   }
 
   itemCount(order: AdminOrder) {
@@ -265,6 +407,11 @@ export class AdminOrdersLiveComponent {
     await this.orders.updateStatus(order.id, status);
   }
 
+  selectFilter(filter: 'all' | OrderStatus, event: Event) {
+    this.filter.set(filter);
+    (event.currentTarget as HTMLElement).scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+
   clearDates() {
     this.dateFrom.set('');
     this.dateTo.set('');
@@ -280,6 +427,10 @@ export class AdminOrdersLiveComponent {
   }
 
   private normalize(value: string) {
-    return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 }

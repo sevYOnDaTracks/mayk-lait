@@ -3,7 +3,7 @@ import { CurrencyPipe } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CatalogService } from '../core/catalog.service';
 import { CartService } from '../core/cart.service';
-import { ProductOption } from '../core/models';
+import { OptionGroup, ProductOption } from '../core/models';
 @Component({
   selector: 'app-product',
   imports: [CurrencyPipe, RouterLink],
@@ -33,8 +33,8 @@ import { ProductOption } from '../core/models';
             }}</span>
           </div>
           @for (group of product.optionGroups; track group.id) {
-            <fieldset class="option-group">
-              <legend>
+            <fieldset class="option-group" [class.volume-group]="isVolumeGroup(group)">
+              <legend [class.option-group-label-hidden]="isVolumeGroup(group)">
                 {{ group.name }}
                 @if (group.required) {
                   <small>Requis</small>
@@ -119,6 +119,9 @@ export class ProductComponent {
   }
   isSelected(g: string, o: string) {
     return this.selected()[g]?.some((x) => x.id === o);
+  }
+  isVolumeGroup(group: OptionGroup) {
+    return group.id === 'volume' || group.name.trim().toLocaleLowerCase('fr') === 'volume';
   }
   select(g: string, multiple: boolean, o: ProductOption) {
     this.selected.update((all) => ({
