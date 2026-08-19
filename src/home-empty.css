@@ -1,0 +1,7 @@
+.products-section .product-grid > .empty-state {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 320px;
+  display: grid;
+  place-content: center;
+}

@@ -1,0 +1,2 @@
+.customer-table{overflow-x:auto}.customer-row{min-width:920px;min-height:76px;font-size:13px;padding:18px 22px}.customer-head{min-height:58px;font-size:12px;font-weight:800;letter-spacing:.025em;color:#333;background:#f1f1ef}.customer-row strong{font-size:14px}.customer-row small{font-size:11px;line-height:1.4}.customer-status,.role-badge{font-size:10px;padding:8px 11px}.row-arrow{font-size:21px;font-weight:700}
+@media(max-width:760px){.customer-table{overflow:visible}.customer-row{min-width:0;min-height:0;font-size:13px}.customer-row strong{font-size:14px}}

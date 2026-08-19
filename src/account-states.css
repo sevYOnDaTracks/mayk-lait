@@ -1,0 +1,2 @@
+app-orders .subpage{max-width:none}.subpage>.empty-state{width:100%;min-height:390px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:72px 24px}.subpage>.empty-state h2{font-size:clamp(30px,4vw,42px);margin:0 0 22px}.subpage>.empty-state p{margin:0 0 34px;max-width:440px}.subpage>.empty-state .button{min-width:150px}
+@media(max-width:650px){.subpage>.empty-state{min-height:340px;padding:58px 12px}.subpage>.empty-state h2{font-size:31px;margin-bottom:18px}.subpage>.empty-state p{margin-bottom:28px}}

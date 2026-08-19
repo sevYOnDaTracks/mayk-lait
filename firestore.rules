@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if (isOwner(uid) && request.resource.data.role == 'customer') || isAdmin();
+      allow update: if (isOwner(uid) && request.resource.data.role == resource.data.role) || isAdmin();
+    }
+    match /addresses/{addressId} {
+      allow create: if signedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
+      allow read, delete: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if signedIn() && ((resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid) || isAdmin());
+    }
+    match /orders/{orderId} {
+      // Les commandes sont créées uniquement par la Cloud Function createOrder,
+      // qui recalcule les prix et les remises côté serveur.
+      allow create: if false;
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+    }
+    match /promotions/{promotionId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+    match /settings/{settingId} {
+      allow read: if (settingId == 'checkout' && signedIn()) || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+    match /emailDeliveries/{deliveryId} {
+      allow read, write: if false;
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

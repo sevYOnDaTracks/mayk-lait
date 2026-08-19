@@ -1,0 +1,1 @@
+export const environment = { production: false, firebase: { apiKey: 'AIzaSyDV_k2GMWE9v9KvuxmOYdsKjSaOpscIfA8', authDomain: 'mayk-lait.firebaseapp.com', projectId: 'mayk-lait', storageBucket: 'mayk-lait.firebasestorage.app', messagingSenderId: '528698822909', appId: '1:528698822909:web:47b441989bf58f6bd76e94', measurementId: 'G-ZDLCP1RE9S' } };

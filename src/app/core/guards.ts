@@ -1,0 +1,4 @@
+import { inject } from '@angular/core'; import { CanActivateFn, Router } from '@angular/router'; import { filter, firstValueFrom, from, map } from 'rxjs'; import { toObservable } from '@angular/core/rxjs-interop'; import { AuthService } from './auth.service';
+const waitForAuth = (auth: AuthService) => firstValueFrom(toObservable(auth.ready).pipe(filter(Boolean)));
+export const authGuard: CanActivateFn = (_, state) => { const auth=inject(AuthService), router=inject(Router); return from(waitForAuth(auth)).pipe(map(() => auth.user() ? true : router.createUrlTree(['/connexion'], { queryParams: { returnUrl: state.url } }))); };
+export const adminGuard: CanActivateFn = () => { const auth=inject(AuthService), router=inject(Router); return from(waitForAuth(auth)).pipe(map(() => auth.isAdmin() ? true : router.createUrlTree(auth.user() ? ['/compte'] : ['/connexion']))); };
