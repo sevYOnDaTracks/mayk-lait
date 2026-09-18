@@ -1,0 +1,43 @@
+<section class="contact-page" aria-labelledby="contact-title">
+  <div class="contact-copy">
+    <h1 id="contact-title">Parlons-en</h1>
+    <p class="contact-lead">
+      La façon la plus rapide de commander reste WhatsApp — nous répondons vite, tous les jours.
+    </p>
+    <a class="primary-button whatsapp-button" href="https://wa.me/33600000000">
+      WhatsApp — +33 6 00 00 00 00
+    </a>
+    <div class="contact-details">
+      <p>Téléphone : +33 6 00 00 00 00</p>
+      <p>Zone de livraison : France</p>
+      <p>Livraisons : samedi et/ou dimanche</p>
+    </div>
+  </div>
+
+  <form class="contact-form" #contactForm="ngForm" (ngSubmit)="submit(contactForm)">
+    <label class="sr-only" for="contact-name">Nom</label>
+    <input id="contact-name" name="name" type="text" placeholder="Nom" required ngModel />
+
+    <label class="sr-only" for="contact-email">Email</label>
+    <input
+      id="contact-email"
+      name="email"
+      type="email"
+      placeholder="Email"
+      autocomplete="email"
+      required
+      email
+      ngModel
+    />
+
+    <label class="sr-only" for="contact-message">Message</label>
+    <textarea id="contact-message" name="message" placeholder="Message" required ngModel></textarea>
+
+    <button class="primary-button" type="submit">Envoyer</button>
+    @if (sent()) {
+      <p class="form-confirmation" role="status">
+        Merci, votre message a bien été pris en compte (démo).
+      </p>
+    }
+  </form>
+</section>

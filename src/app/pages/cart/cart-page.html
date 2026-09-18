@@ -1,0 +1,66 @@
+<section class="cart-page" aria-labelledby="cart-title">
+  <div class="cart-shell">
+    <h1 id="cart-title">Votre commande</h1>
+
+    <ol class="checkout-steps" aria-label="Étapes de la commande">
+      <li class="is-active">1. Compte</li>
+      <li>2. Livraison</li>
+      <li>3. Récap</li>
+    </ol>
+
+    @if (cart.lines().length > 0) {
+      <div class="cart-lines">
+        @for (line of cart.lines(); track line.product.id) {
+          <article class="cart-line">
+            <div class="cart-product">
+              <h2>{{ line.product.name }}</h2>
+              <p>Pot de 240 ml</p>
+            </div>
+            <div class="cart-line-actions">
+              <div class="quantity-control" aria-label="Quantité">
+                <button
+                  type="button"
+                  (click)="decrement(line.product.id)"
+                  [attr.aria-label]="'Diminuer la quantité de ' + line.product.name"
+                >
+                  −
+                </button>
+                <strong>{{ line.quantity }}</strong>
+                <button
+                  type="button"
+                  (click)="increment(line.product.id)"
+                  [attr.aria-label]="'Augmenter la quantité de ' + line.product.name"
+                >
+                  +
+                </button>
+              </div>
+              <strong class="line-price"
+                >{{ (line.product.price * line.quantity).toFixed(2) }} €</strong
+              >
+              <button
+                class="remove-line"
+                type="button"
+                (click)="remove(line.product.id)"
+                [attr.aria-label]="'Retirer ' + line.product.name + ' de la commande'"
+              >
+                Retirer
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+
+      <p class="cart-total">Total :{{ formattedTotal() }} €</p>
+    } @else {
+      <div class="empty-cart">
+        <p>Votre panier est vide.</p>
+        <a class="outline-button" routerLink="/produits">Voir les produits</a>
+      </div>
+    }
+
+    <div class="cart-account-prompt">
+      <p>Un compte est nécessaire pour finaliser la commande.</p>
+      <a class="primary-button" routerLink="/connexion">Se connecter / créer un compte</a>
+    </div>
+  </div>
+</section>

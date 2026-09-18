@@ -1,0 +1,34 @@
+<div class="home-page">
+  <section class="home-hero" aria-labelledby="home-title">
+    <p class="eyebrow">ARTISANAL · FAIT EN FRANCE</p>
+    <h1 id="home-title">Le yaourt et le dègue faits<br />maison</h1>
+    <p class="home-intro">
+      Une recette généreuse, préparée à la main et livrée le week-end —<br />
+      yaourt nature et dègue au grain de mil, en pot individuel.
+    </p>
+    <a class="primary-button home-cta" routerLink="/" fragment="produits">Voir les produits</a>
+  </section>
+
+  <section id="produits" class="home-products" aria-label="Nos produits">
+    <div class="product-grid">
+      @for (product of products; track product.id) {
+        <app-product-card [product]="product" [compact]="true" />
+      }
+    </div>
+  </section>
+
+  <section class="feature-strip" aria-label="Nos engagements">
+    <article>
+      <h2>Recette maison</h2>
+      <p>Préparée à la main, par petites séries.</p>
+    </article>
+    <article>
+      <h2>Pot de 240 ml</h2>
+      <p>Format individuel, prêt à consommer.</p>
+    </article>
+    <article>
+      <h2>Livraison le week-end</h2>
+      <p>Commande avant vendredi, livraison samedi et/ou dimanche.</p>
+    </article>
+  </section>
+</div>

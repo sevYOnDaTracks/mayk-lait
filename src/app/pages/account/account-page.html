@@ -1,0 +1,135 @@
+<section class="account-page" [class.account-page--register]="mode() === 'register'">
+  <div class="account-shell">
+    <h1 class="sr-only">
+      {{ mode() === 'login' ? 'Connexion' : 'Créer un compte' }}
+    </h1>
+    <nav class="account-tabs" aria-label="Accès au compte">
+      <a
+        routerLink="/connexion"
+        [class.is-active]="mode() === 'login'"
+        [attr.aria-current]="mode() === 'login' ? 'page' : null"
+        >Connexion</a
+      >
+      <a
+        routerLink="/inscription"
+        [class.is-active]="mode() === 'register'"
+        [attr.aria-current]="mode() === 'register' ? 'page' : null"
+        >Créer un compte</a
+      >
+    </nav>
+
+    @if (mode() === 'login') {
+      <form class="account-form" #loginForm="ngForm" (ngSubmit)="submitLogin(loginForm)">
+        <label class="sr-only" for="login-email">Email</label>
+        <input
+          id="login-email"
+          name="email"
+          type="email"
+          placeholder="Email"
+          autocomplete="email"
+          required
+          email
+          ngModel
+        />
+
+        <label class="sr-only" for="login-password">Mot de passe</label>
+        <input
+          id="login-password"
+          name="password"
+          type="password"
+          placeholder="Mot de passe"
+          autocomplete="current-password"
+          required
+          ngModel
+        />
+
+        <button class="primary-button" type="submit">Se connecter (démo)</button>
+      </form>
+    } @else {
+      <form
+        class="account-form register-form"
+        #registerForm="ngForm"
+        (ngSubmit)="submitRegistration(registerForm)"
+      >
+        <label class="sr-only" for="register-name">Nom complet</label>
+        <input
+          id="register-name"
+          name="name"
+          type="text"
+          placeholder="Nom complet"
+          required
+          ngModel
+        />
+
+        <label class="sr-only" for="register-phone">Numéro de téléphone</label>
+        <input
+          id="register-phone"
+          name="phone"
+          type="tel"
+          placeholder="Numéro de téléphone"
+          autocomplete="tel"
+          required
+          ngModel
+        />
+
+        <label class="sr-only" for="register-email">Email</label>
+        <input
+          id="register-email"
+          name="email"
+          type="email"
+          placeholder="Email"
+          autocomplete="email"
+          required
+          email
+          ngModel
+        />
+
+        <label class="sr-only" for="register-password">Mot de passe</label>
+        <input
+          id="register-password"
+          name="password"
+          type="password"
+          placeholder="Mot de passe"
+          autocomplete="new-password"
+          required
+          minlength="8"
+          ngModel
+        />
+
+        <label class="sr-only" for="register-birthdate">Date de naissance</label>
+        <input
+          id="register-birthdate"
+          name="birthdate"
+          type="text"
+          placeholder="17/08/2026"
+          inputmode="numeric"
+          autocomplete="bday"
+          pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"
+          required
+          ngModel
+        />
+
+        <label class="sr-only" for="register-address">Adresse de livraison</label>
+        <input
+          id="register-address"
+          name="address"
+          type="text"
+          placeholder="Adresse de livraison"
+          autocomplete="street-address"
+          required
+          ngModel
+        />
+
+        <label class="sr-only" for="register-allergens">Allergènes particuliers</label>
+        <textarea
+          id="register-allergens"
+          name="allergens"
+          placeholder="Allergènes particuliers (facultatif)"
+          ngModel
+        ></textarea>
+
+        <button class="primary-button" type="submit">Créer mon compte (démo)</button>
+      </form>
+    }
+  </div>
+</section>

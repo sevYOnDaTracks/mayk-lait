@@ -1,0 +1,15 @@
+:host {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+.site-main {
+  display: flex;
+  flex: 1;
+  width: 100%;
+}
+
+.site-main > :not(router-outlet) {
+  width: 100%;
+}

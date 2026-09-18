@@ -1,0 +1,21 @@
+<section class="products-page" aria-labelledby="products-title">
+  <header class="products-heading">
+    <h1 id="products-title">Yaourt nature &amp; dègue</h1>
+    <p>
+      Deux recettes maison, en pot de 240 ml : yaourt nature, lait, lait concentré<br />
+      sucré, sucre vanillé et noix de muscade.
+    </p>
+  </header>
+
+  <div class="product-grid products-grid">
+    @for (product of products; track product.id) {
+      <app-product-card [product]="product" />
+    }
+  </div>
+
+  <p class="products-note">
+    Formats 500 ml et 1 L disponibles sur demande —
+    <a routerLink="/contact">contactez-nous.</a>
+    Allergènes à renseigner lors de la création de votre compte.
+  </p>
+</section>

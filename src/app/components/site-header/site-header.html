@@ -1,0 +1,47 @@
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" routerLink="/" aria-label="Mayk Lait, accueil">
+      MAYK LAIT<span aria-hidden="true">.</span>
+    </a>
+
+    <nav class="main-nav" aria-label="Navigation principale">
+      <a
+        routerLink="/"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        [routerLinkActiveOptions]="{ exact: true }"
+        >Accueil</a
+      >
+      <a routerLink="/produits" routerLinkActive="is-active" ariaCurrentWhenActive="page"
+        >Produits</a
+      >
+      <a routerLink="/contact" routerLinkActive="is-active" ariaCurrentWhenActive="page">Contact</a>
+    </nav>
+
+    <div class="header-actions">
+      <a class="round-action account-action" routerLink="/connexion" aria-label="Mon compte">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <circle cx="12" cy="7.4" r="3.7"></circle>
+          <path d="M5.4 20c.5-4.1 2.7-6.2 6.6-6.2s6.1 2.1 6.6 6.2"></path>
+        </svg>
+      </a>
+      <a
+        class="round-action cart-action"
+        routerLink="/commande"
+        [attr.aria-label]="
+          cart.count() === 1
+            ? 'Voir ma commande, 1 article'
+            : 'Voir ma commande, ' + cart.count() + ' articles'
+        "
+      >
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M8.2 8.1V6a3.8 3.8 0 0 1 7.6 0v2.1"></path>
+          <path d="M6.6 8.1h10.8l-.7 11H7.3l-.7-11Z"></path>
+        </svg>
+        @if (cart.count() > 0) {
+          <span class="cart-badge" aria-label="Articles dans le panier">{{ cart.count() }}</span>
+        }
+      </a>
+    </div>
+  </div>
+</header>
