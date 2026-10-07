@@ -11,6 +11,7 @@ export interface CheckoutOrderInput {
   address: { line1: string; line2: string; city: string; postalCode: string; instructions: string };
   items: CartItem[];
   promoCode?: string;
+  requestId: string;
 }
 
 export interface PromotionValidation {
