@@ -23,14 +23,14 @@ import { CheckoutSettingsService } from '../core/checkout-settings.service';
           </div>
 
           <p class="checkout-success-thanks">Merci {{ confirmedFirstName() }}.</p>
-          <h1 id="success-title">Commande<br>confirmée.</h1>
-          <p class="checkout-success-lead">Ta commande est bien enregistrée.</p>
+          <h1 id="success-title">Commande<br>reçue.</h1>
+          <p class="checkout-success-lead">Ta commande est enregistrée et attend notre validation.</p>
 
           <p class="checkout-success-number">{{ confirmedOrderNumber() }}</p>
 
           <div class="checkout-success-delivery">
             <span>PROCHAINE ÉTAPE</span>
-            <strong>Livraison prévue pour le week-end prochain.</strong>
+            <strong>Nous te contacterons pour confirmer la livraison.</strong>
             <small>Tu peux suivre sa préparation depuis ton compte.</small>
           </div>
 
@@ -58,7 +58,7 @@ import { CheckoutSettingsService } from '../core/checkout-settings.service';
               <label>Email *<input type="email" formControlName="email" autocomplete="email"></label>
             </div>
 
-            <h2>Livraison</h2>
+            <h2>Livraison en Île-de-France</h2><p class="settings-hint">Livraison dans les départements 75, 77, 78, 91, 92, 93, 94 et 95. Nous te contacterons pour convenir du passage.</p>
             @if (addresses.loading()) {
               <div class="saved-address-loading">Chargement de tes adresses…</div>
             } @else if (addresses.error()) {
@@ -88,6 +88,7 @@ import { CheckoutSettingsService } from '../core/checkout-settings.service';
               <label>Ville *<input formControlName="city" autocomplete="address-level2" (input)="clearAddressSelection()"></label>
               <label>Code postal *<input formControlName="postalCode" autocomplete="postal-code" (input)="clearAddressSelection()"></label>
             </div>
+            @if (form.controls.postalCode.touched && form.controls.postalCode.invalid) { <p class="form-error">Indique un code postal valide en Île-de-France.</p> }
             <label>Instructions de livraison<textarea formControlName="instructions" rows="3" placeholder="Code, étage, porte..." (input)="clearAddressSelection()"></textarea></label>
 
             @if (auth.emailVerificationRequired()) {
@@ -105,9 +106,9 @@ import { CheckoutSettingsService } from '../core/checkout-settings.service';
             }
 
             <h2>Paiement</h2>
-            <div class="payment-placeholder"><span>À la livraison</span><small>Le paiement en ligne sera bientôt disponible.</small></div>
+            <div class="payment-placeholder"><span>À la livraison</span><small>Aucun paiement en ligne. Le montant sera réglé lors de la livraison.</small></div>
             @if (error()) { <p class="form-error">{{ error() }}</p> }
-            <button class="button full" [disabled]="form.invalid || saving() || auth.emailVerificationRequired()">{{ saving() ? 'Enregistrement…' : 'Confirmer ma commande' }}</button>
+            <button class="button full" [disabled]="form.invalid || saving() || auth.emailVerificationRequired()">{{ saving() ? 'Enregistrement…' : 'Envoyer ma commande' }}</button>
           </form>
 
           <aside class="order-summary" [formGroup]="form">
@@ -183,6 +184,8 @@ export class CheckoutComponent {
   readonly delivery = this.checkoutSettings.deliveryFee;
   readonly discount = computed(() => this.appliedPromotion()?.discount ?? 0);
   readonly total = computed(() => Math.max(0, this.cart.subtotal() - this.discount()) + this.delivery());
+  private requestId = crypto.randomUUID();
+  private pendingInput: Parameters<OrderService["create"]>[0] | null = null;
   private defaultAddressApplied = false;
   private user = this.auth.user();
 
@@ -194,7 +197,7 @@ export class CheckoutComponent {
     address: ['', Validators.required],
     address2: [''],
     city: ['', Validators.required],
-    postalCode: ['', Validators.required],
+    postalCode: ['', [Validators.required, Validators.pattern(/^(75|77|78|91|92|93|94|95)[0-9]{3}$/)]],
     instructions: [''],
     promoCode: ['']
   });
@@ -296,18 +299,24 @@ export class CheckoutComponent {
     const value = this.form.getRawValue();
     const items = this.cart.items();
     try {
-      const order = await this.orders.create({
+      this.pendingInput ??= {
+        requestId: this.requestId,
         customer: { firstName: value.firstName ?? '', lastName: value.lastName ?? '', phone: value.phone ?? '', email: value.email ?? '' },
         address: { line1: value.address ?? '', line2: value.address2 ?? '', city: value.city ?? '', postalCode: value.postalCode ?? '', instructions: value.instructions ?? '' },
         items,
         promoCode: this.appliedPromotion()?.code
-      });
+      };
+      const order = await this.orders.create(this.pendingInput);
       this.confirmedFirstName.set((value.firstName ?? '').trim());
       this.confirmedOrderNumber.set(order.orderNumber);
       this.cart.clear();
       this.done.set(true);
       scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error: any) {
+      if (['functions/invalid-argument', 'functions/failed-precondition', 'functions/not-found', 'functions/permission-denied', 'functions/unauthenticated'].includes(error?.code)) {
+        this.pendingInput = null;
+        this.requestId = crypto.randomUUID();
+      }
       this.error.set(error?.message ?? 'Impossible d’enregistrer la commande. Réessaie dans un instant.');
     } finally {
       this.saving.set(false);

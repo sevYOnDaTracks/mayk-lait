@@ -1,3 +1,4 @@
+import { isDeliverablePostalCode, orderIdForRequest } from './commerce-policy';
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { defineJsonSecret } from 'firebase-functions/params';
@@ -38,6 +39,7 @@ interface CreateOrderData {
   address: AddressInput;
   items: RequestedItem[];
   promoCode?: string;
+  requestId: string;
 }
 
 interface PromotionData {
@@ -178,10 +180,23 @@ export const createOrder = onCall(async request => {
     throw new HttpsError('invalid-argument', 'Le panier est invalide.');
   }
   const promoCode = normalizePromoCode(data.promoCode);
-  const reference = db.collection('orders').doc();
+  if (!isDeliverablePostalCode(address.postalCode)) {
+    throw new HttpsError('failed-precondition', 'La livraison est disponible uniquement en Île-de-France. Vérifie ton code postal.');
+  }
+  const requestId = requiredText(data.requestId, 'La référence de commande', 80);
+  if (!/^[a-zA-Z0-9_-]{16,80}$/.test(requestId)) throw new HttpsError('invalid-argument', 'Référence de commande invalide.');
+  const orderId = orderIdForRequest(auth.uid, requestId);
+  const reference = db.collection('orders').doc(orderId);
   const publicNumber = orderNumber(customer.firstName, customer.lastName);
 
   return db.runTransaction(async transaction => {
+    const existing = await transaction.get(reference);
+    if (existing.exists) {
+      const order = existing.data()!;
+      return { id: reference.id, orderNumber: order.orderNumber, subtotal: order.subtotal, discount: order.discount, deliveryFee: order.deliveryFee, total: order.total };
+    }
+    const profile = await transaction.get(db.collection('users').doc(auth.uid));
+    if (profile.data()?.disabled) throw new HttpsError('permission-denied', 'Ce compte est désactivé.');
     const productRefs = data.items.map(item => db.collection('products').doc(requiredText(item.productId, 'Le produit', 100)));
     const productSnapshots = await Promise.all(productRefs.map(productRef => transaction.get(productRef)));
     const settingsSnapshot = await transaction.get(db.collection('settings').doc('checkout'));
@@ -210,11 +225,14 @@ export const createOrder = onCall(async request => {
         const options = selectedIds.map(id => {
           const option = (Array.isArray(group.options) ? group.options : []).find((candidate: any) => candidate.id === id && candidate.available);
           if (!option) throw new HttpsError('failed-precondition', 'Une option sélectionnée n’est plus disponible.');
-          unitPriceCents += cents(Number(option.priceModifier ?? 0));
+          const modifier = Number(option.priceModifier ?? 0);
+          if (!Number.isFinite(modifier)) throw new HttpsError('failed-precondition', 'Le prix d’une option est invalide.');
+          unitPriceCents += cents(modifier);
           return { id: option.id, name: option.name, priceModifier: Number(option.priceModifier ?? 0), available: true, position: Number(option.position ?? 0) };
         });
         return options.length ? { groupId: group.id, groupName: group.name, options } : null;
       }).filter(Boolean);
+      if (unitPriceCents < 0) throw new HttpsError('failed-precondition', 'Le prix final d’un produit est invalide.');
       subtotalCents += unitPriceCents * quantity;
       return {
         id: `${reference.id}-${index + 1}`,
@@ -231,6 +249,7 @@ export const createOrder = onCall(async request => {
     });
 
     const deliveryFeeCents = cents(Number(settingsSnapshot.data()?.deliveryFee ?? DEFAULT_DELIVERY_FEE));
+    if (!Number.isFinite(deliveryFeeCents) || deliveryFeeCents < 0 || deliveryFeeCents > 10000) throw new HttpsError('failed-precondition', 'Les frais de livraison sont invalides.');
     let discountCents = 0;
     let promotion = null;
     if (promoCode) {
@@ -254,7 +273,8 @@ export const createOrder = onCall(async request => {
       total: euros(totalCents),
       status: 'pending',
       deliveryMode: 'delivery',
-      paymentMethod: 'pending',
+      paymentMethod: 'cash_on_delivery',
+      paymentStatus: 'unpaid',
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp()
     });
@@ -363,9 +383,9 @@ export const sendOrderConfirmationEmail = onDocumentCreated(
         from: config.from,
         replyTo: config.replyTo || config.from,
         to: order.customer.email,
-        subject: `Commande ${order.orderNumber} confirmée — MAYKLAIT`,
-        text: `Merci ${order.customer.firstName}. Ta commande ${order.orderNumber} est confirmée. Total : ${currency.format(Number(order.total ?? 0))}. Livraison prévue pour le week-end prochain.`,
-        html: `<div style="font-family:Arial,sans-serif;color:#111;max-width:600px;margin:auto;padding:32px"><p style="font-weight:800;letter-spacing:.08em">MAYKLAIT</p><h1 style="font-size:42px;line-height:1">Merci ${escapeHtml(order.customer.firstName)}.</h1><p>Ta commande <strong>${escapeHtml(order.orderNumber)}</strong> est confirmée.</p><ul style="padding-left:20px">${items}</ul>${Number(order.discount ?? 0) > 0 ? `<p>Réduction : −${escapeHtml(currency.format(Number(order.discount)))}</p>` : ''}<p style="font-size:22px"><strong>Total : ${escapeHtml(currency.format(Number(order.total ?? 0)))}</strong></p><p>Livraison prévue pour le week-end prochain.</p></div>`
+        subject: `Commande ${order.orderNumber} reçue — MAYKLAIT`,
+        text: `Merci ${order.customer.firstName}. Ta commande ${order.orderNumber} est bien reçue et en attente de validation. Total : ${currency.format(Number(order.total ?? 0))}. Nous te contacterons pour confirmer la livraison. Paiement à la livraison.`,
+        html: `<div style="font-family:Arial,sans-serif;color:#111;max-width:600px;margin:auto;padding:32px"><p style="font-weight:800;letter-spacing:.08em">MAYKLAIT</p><h1 style="font-size:42px;line-height:1">Merci ${escapeHtml(order.customer.firstName)}.</h1><p>Ta commande <strong>${escapeHtml(order.orderNumber)}</strong> est bien reçue et en attente de validation.</p><ul style="padding-left:20px">${items}</ul>${Number(order.discount ?? 0) > 0 ? `<p>Réduction : −${escapeHtml(currency.format(Number(order.discount)))}</p>` : ''}<p style="font-size:22px"><strong>Total : ${escapeHtml(currency.format(Number(order.total ?? 0)))}</strong></p><p>Nous te contacterons pour confirmer la livraison. Paiement à la livraison.</p></div>`
       });
       await Promise.all([
         deliveryRef.set({ status: 'sent', sentAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true }),

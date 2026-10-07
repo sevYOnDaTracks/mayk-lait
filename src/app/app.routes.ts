@@ -14,6 +14,9 @@ export const routes: Routes = [
   ]},
   { path: '', loadComponent: () => import('./shared/storefront-shell.component').then(m => m.StorefrontShellComponent), children: [
     { path: '', loadComponent: () => import('./features/home.component').then(m => m.HomeComponent), title: 'MAYKLAIT — Dêguê premium' },
+    { path: 'livraison', loadComponent: () => import('./features/information.component').then(m => m.InformationComponent), data: { page: 'delivery' }, title: 'Livraison et paiement | MAYKLAIT' },
+    { path: 'confidentialite', loadComponent: () => import('./features/information.component').then(m => m.InformationComponent), data: { page: 'privacy' }, title: 'Confidentialité | MAYKLAIT' },
+    { path: 'mentions-legales', loadComponent: () => import('./features/information.component').then(m => m.InformationComponent), data: { page: 'legal' }, title: 'Mentions légales | MAYKLAIT' },
     { path: 'boutique', loadComponent: () => import('./features/shop.component').then(m => m.ShopComponent), title: 'Boutique | MAYKLAIT' },
     { path: 'commander', redirectTo: 'boutique', pathMatch: 'full' },
     { path: 'produit/:slug', loadComponent: () => import('./features/product.component').then(m => m.ProductComponent), title: 'Dêguê | MAYKLAIT' },
